@@ -167,29 +167,24 @@
     const editTask = (e) => {
         // We retrieve the value of the attribute data-id;
         const id = e.target.dataset.id;
-
-
-        
-        let currentDOMTask = document.getElementById(`task-${id}`);
-        currentDOMTask.querySelector("label > input[type=checkbox]").remove();
-
-        let currentTask = new Task(currentDOMTask.querySelector("label").innerHTML.trim());
+        let currentTask = new Task($(`#task-${id} label`).text().trim());
         currentTask.id = id;
-
-        currentDOMTask.querySelector('label').remove();
-
-        let inputText = document.createElement('input');
-        inputText.setAttribute('id', `task-edit-${currentTask.id}`);
-        inputText.setAttribute('type', 'text');
-        inputText.setAttribute('value', currentTask.description);
-
+        
+        let currentDOMTask = $(`#task-${id}`)
+        $(`#task-${id} label input[type=checkbox]`).remove();
+        $(`#task-${id} label`).remove();
+        let inputText = `
+        <input id="task-edit-${currentTask.id}" type="text" value="${currentTask.description}">
+        `;
+        currentDOMTask.append(inputText);
         /**
          * We associate the event click on the button ok, to send a PUT request to the server.
          */
-        let buttonOK = document.createElement('button');
-        buttonOK.innerText = 'OK';
-        buttonOK.setAttribute('id', `ok-button-${currentTask.id}`);
-        buttonOK.onclick = () => {
+        let buttonOK = `
+        <button id="ok-button-${currentTask.id}">OK</button>
+        `;
+        currentDOMTask.append(buttonOK);
+        $(`#ok-button-${currentTask.id}`).click(() => {
             currentTask.description = $(`#task-edit-${currentTask.id}`).val();
             $.ajax({
                 url: `${API_URL}/${currentTask.id}`,
@@ -206,21 +201,15 @@
                     revertHTMLChangeOnEdit(data);
                 }
             });
-        };
-
-        let buttonCancel = document.createElement('button');
-        buttonCancel.innerText = 'Cancel';
-        buttonCancel.setAttribute('id', `cancel-button-${currentTask.id}`);
-        buttonCancel.onclick = () => revertHTMLChangeOnEdit(currentTask);
-
-        currentDOMTask.insertBefore(buttonCancel, currentDOMTask.children[0]);
-        currentDOMTask.insertBefore(buttonOK, currentDOMTask.children[0]);
-        currentDOMTask.insertBefore(inputText, currentDOMTask.children[0]);
-
-        currentDOMTask.querySelector('.edit').style.visibility = 'hidden';
-        currentDOMTask.querySelector('.delete').style.visibility = 'hidden';
-
-        inputText.focus();
+        });
+        
+        let buttonCancel = `
+        <button id="cancel-button-${currentTask.id}">Cancel</button>
+        `;
+        currentDOMTask.append(buttonCancel);
+        $(`#cancel-button-${currentTask.id}`).click(() => revertHTMLChangeOnEdit(currentTask));
+        $(`#task-${id} .edit`).css('visibility', 'hidden');
+        $(`#task-${id} .delete`).css('visibility', 'hidden');
     };
 
     /**
@@ -229,22 +218,17 @@
      */
     const revertHTMLChangeOnEdit = (currentTask) => {
         let task = currentTask instanceof Task || typeof currentTask === 'object' ? currentTask : JSON.parse(currentTask);
+        $(`#task-${task.id} input[type=text]`).remove();
+        $(`#ok-button-${task.id}`).remove();
+        $(`#cancel-button-${task.id}`).remove();
 
-        let currentDOMTask = document.getElementById(`task-${task.id}`);
-        currentDOMTask.querySelector('input[type=text]').remove();
-
-        let label = document.createElement('label');
-
-        currentDOMTask.insertBefore(label, currentDOMTask.children[0]);
-        label.innerHTML = `<input type="checkbox"/> ${task.description}`;
+        let html=`
+        <label><input type="checkbox"/> ${task.description}</label>
+        `
+        $(`#task-${task.id}`).prepend(html);
+        $(`#task-${task.id} .edit`).css('visibility', 'visible');
+        $(`#task-${task.id} .delete`).css('visibility', 'visible');
         addOnChangeEvent(task);
-
-        currentDOMTask.insertBefore(label, currentDOMTask.children[0]);
-        currentDOMTask.querySelector(`button#ok-button-${task.id}`).remove();
-        currentDOMTask.querySelector(`button#cancel-button-${task.id}`).remove();
-
-        currentDOMTask.querySelector('.edit').style.visibility = 'visible';
-        currentDOMTask.querySelector('.delete').style.visibility = 'visible';
     };
 
     /**
